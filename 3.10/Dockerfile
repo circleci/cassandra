@@ -1,5 +1,5 @@
 # vim:set ft=dockerfile:
-FROM debian:jessie-backports
+FROM airdock/oracle-jdk:1.8
 
 # explicitly set user/group IDs
 RUN groupadd -r cassandra --gid=999 && useradd -r -g cassandra --uid=999 cassandra
@@ -47,11 +47,11 @@ RUN echo 'deb http://www.apache.org/dist/cassandra/debian 310x main' >> /etc/apt
 
 ENV CASSANDRA_VERSION 3.10
 
-RUN apt-get update \
-	&& apt-get install -y \
-		cassandra="$CASSANDRA_VERSION" \
-		cassandra-tools="$CASSANDRA_VERSION" \
-	&& rm -rf /var/lib/apt/lists/*
+# Tweaks to force install Cassandra because it complains dependency with openjdk which we don't have
+RUN apt-get update
+RUN apt-get -y install python
+RUN apt-get download cassandra
+RUN dpkg --force-depends -i cassandra_3.10_all.deb
 
 # https://issues.apache.org/jira/browse/CASSANDRA-11661
 RUN sed -ri 's/^(JVM_PATCH_VERSION)=.*/\1=25/' /etc/cassandra/cassandra-env.sh
